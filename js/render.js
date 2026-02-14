@@ -1,13 +1,16 @@
 export function renderizar(lista, contenedor) {
   contenedor.innerHTML = "";
 
-  lista.forEach(incidencia => {
+  const ordenadas = [...lista].sort((a, b) => {
+    return (b.fecha || 0) - (a.fecha || 0);
+  });
+
+  ordenadas.forEach(incidencia => {
     const div = document.createElement("div");
 
     div.classList.add("incidencia", incidencia.prioridad);
     div.dataset.id = incidencia.id;
 
-    // Texto dinámico del botón de estado
     let textoBoton = "";
 
     if (incidencia.estado === "pendiente") {
@@ -18,11 +21,19 @@ export function renderizar(lista, contenedor) {
       textoBoton = "Reabrir";
     }
 
+    // 🔥 Manejo seguro de fecha
+    let fechaFormateada = "Sin fecha";
+
+    if (incidencia.fecha) {
+      fechaFormateada = new Date(incidencia.fecha).toLocaleString();
+    }
+
     div.innerHTML = `
       <h3>${incidencia.titulo}</h3>
       <p>${incidencia.descripcion}</p>
       <p><strong>Prioridad:</strong> ${incidencia.prioridad}</p>
       <p><strong>Estado:</strong> ${incidencia.estado.replace("-", " ")}</p>
+      <p><small>Creada: ${fechaFormateada}</small></p>
 
       <button class="btn-eliminar">Eliminar</button>
       <button class="btn-estado">${textoBoton}</button>

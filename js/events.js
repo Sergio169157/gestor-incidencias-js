@@ -3,7 +3,7 @@ import {
   agregarIncidencia,
   eliminarIncidencia,
   cambiarEstado,
-  editarIncidencia
+  actualizarIncidencia
 } from "./state.js";
 
 import { renderizar, actualizarContador } from "./render.js";
@@ -13,6 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const formulario = document.getElementById("form-incidencia");
   const lista = document.getElementById("lista-incidencias");
 
+  const inputTitulo = document.getElementById("titulo");
+  const inputDescripcion = document.getElementById("descripcion");
+  const inputPrioridad = document.getElementById("prioridad");
+  const botonSubmit = formulario.querySelector("button");
+
+  let modoEdicion = false;
+  let idEditando = null;
+
   function refrescar() {
     const datos = getIncidencias();
     renderizar(datos, lista);
@@ -21,26 +29,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refrescar();
 
-  // CREAR INCIDENCIA
+  // SUBMIT FORM
   formulario.addEventListener("submit", function(e) {
     e.preventDefault();
 
-    const titulo = document.getElementById("titulo").value.trim();
-    const descripcion = document.getElementById("descripcion").value.trim();
-    const prioridad = document.getElementById("prioridad").value;
+    const titulo = inputTitulo.value.trim();
+    const descripcion = inputDescripcion.value.trim();
+    const prioridad = inputPrioridad.value;
 
     if (!titulo || !descripcion) {
       alert("El título y la descripción son obligatorios.");
       return;
     }
 
-    agregarIncidencia({
-      id: Date.now(),
-      titulo,
-      descripcion,
-      prioridad,
-      estado: "pendiente"
-    });
+    if (modoEdicion) {
+      actualizarIncidencia(idEditando, {
+        titulo,
+        descripcion,
+        prioridad
+      });
+
+      modoEdicion = false;
+      idEditando = null;
+      botonSubmit.textContent = "Crear";
+    } else {
+      agregarIncidencia({
+        id: Date.now(),
+        titulo,
+        descripcion,
+        prioridad,
+        estado: "pendiente"
+      });
+    }
 
     formulario.reset();
     refrescar();
@@ -69,27 +89,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // EDITAR
     if (e.target.classList.contains("btn-editar")) {
-
       const incidencia = getIncidencias().find(i => i.id === id);
       if (!incidencia) return;
 
-      const nuevoTitulo = prompt("Nuevo título:", incidencia.titulo);
-      if (nuevoTitulo === null) return;
+      inputTitulo.value = incidencia.titulo;
+      inputDescripcion.value = incidencia.descripcion;
+      inputPrioridad.value = incidencia.prioridad;
 
-      const nuevaDescripcion = prompt("Nueva descripción:", incidencia.descripcion);
-      if (nuevaDescripcion === null) return;
-
-      if (!nuevoTitulo.trim() || !nuevaDescripcion.trim()) {
-        alert("Los campos no pueden estar vacíos.");
-        return;
-      }
-
-      editarIncidencia(id, {
-        titulo: nuevoTitulo.trim(),
-        descripcion: nuevaDescripcion.trim()
-      });
-
-      refrescar();
+      modoEdicion = true;
+      idEditando = id;
+      botonSubmit.textContent = "Guardar cambios";
     }
   });
 

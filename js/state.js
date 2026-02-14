@@ -7,6 +7,9 @@ export function getIncidencias() {
 
 export function agregarIncidencia(nueva) {
   const incidencias = getIncidencias();
+
+  nueva.fecha = Date.now(); // 🔥 fecha automática
+
   incidencias.push(nueva);
   localStorage.setItem(KEY, JSON.stringify(incidencias));
 }
@@ -29,14 +32,12 @@ export function cambiarEstado(id) {
     resuelta: "pendiente"
   };
 
-  if (!flujo[incidencia.estado]) return;
-
   incidencia.estado = flujo[incidencia.estado];
 
   localStorage.setItem(KEY, JSON.stringify(incidencias));
 }
 
-export function editarIncidencia(id, nuevosDatos) {
+export function actualizarIncidencia(id, nuevosDatos) {
   const incidencias = getIncidencias();
 
   const incidencia = incidencias.find(i => i.id === id);
@@ -44,6 +45,7 @@ export function editarIncidencia(id, nuevosDatos) {
 
   incidencia.titulo = nuevosDatos.titulo;
   incidencia.descripcion = nuevosDatos.descripcion;
+  incidencia.prioridad = nuevosDatos.prioridad;
 
   localStorage.setItem(KEY, JSON.stringify(incidencias));
 }
