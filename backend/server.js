@@ -1,7 +1,8 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const sqlite3 = require("sqlite3").verbose();
-const { body, validationResult, param } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
@@ -9,11 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const SECRET_KEY = "super_clave_secreta";
+const SECRET_KEY = process.env.SECRET_KEY;
 
-// ==========================
-// Base de datos
-// ==========================
+// ===============================
+// BASE DE DATOS
+// ===============================
 
 const db = new sqlite3.Database("./incidencias.db");
 
@@ -39,13 +40,13 @@ db.serialize(() => {
   `);
 });
 
-// ==========================
-// Middleware JWT
-// ==========================
+// ===============================
+// MIDDLEWARE AUTH
+// ===============================
 
 function verificarToken(req, res, next) {
-
   const authHeader = req.headers["authorization"];
+
   if (!authHeader) {
     return res.status(401).json({ error: "Token requerido" });
   }
@@ -62,46 +63,38 @@ function verificarToken(req, res, next) {
   });
 }
 
-// ==========================
-// Registro
-// ==========================
+// ===============================
+// REGISTER
+// ===============================
 
-app.post(
-  "/api/register",
+app.post("/api/register", async (req, res) => {
 
-  body("username").notEmpty(),
-  body("password").isLength({ min: 4 }),
+  const { username, password } = req.body;
 
-  async (req, res) => {
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errores: errors.array() });
-    }
-
-    const { username, password } = req.body;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    db.run(
-      "INSERT INTO usuarios (username, password) VALUES (?, ?)",
-      [username, hashedPassword],
-      function (err) {
-        if (err) {
-          return res.status(400).json({ error: "Usuario ya existe" });
-        }
-
-        res.status(201).json({ mensaje: "Usuario creado" });
-      }
-    );
+  if (!username || !password) {
+    return res.status(400).json({ error: "Datos incompletos" });
   }
-);
 
-// ==========================
-// Login
-// ==========================
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-app.post("/api/login", async (req, res) => {
+  db.run(
+    "INSERT INTO usuarios (username, password) VALUES (?, ?)",
+    [username, hashedPassword],
+    function (err) {
+      if (err) {
+        return res.status(400).json({ error: "Usuario ya existe" });
+      }
+
+      res.status(201).json({ mensaje: "Usuario creado" });
+    }
+  );
+});
+
+// ===============================
+// LOGIN
+// ===============================
+
+app.post("/api/login", (req, res) => {
 
   const { username, password } = req.body;
 
@@ -110,20 +103,20 @@ app.post("/api/login", async (req, res) => {
     [username],
     async (err, user) => {
 
-      if (err || !user) {
-        return res.status(400).json({ error: "Credenciales incorrectas" });
+      if (!user) {
+        return res.status(400).json({ error: "Usuario no encontrado" });
       }
 
       const match = await bcrypt.compare(password, user.password);
 
       if (!match) {
-        return res.status(400).json({ error: "Credenciales incorrectas" });
+        return res.status(401).json({ error: "Contraseña incorrecta" });
       }
 
       const token = jwt.sign(
         { id: user.id, username: user.username },
         SECRET_KEY,
-        { expiresIn: "1h" }
+        { expiresIn: "2h" }
       );
 
       res.json({ token });
@@ -131,104 +124,92 @@ app.post("/api/login", async (req, res) => {
   );
 });
 
-// ==========================
-// GET incidencias
-// ==========================
+// ===============================
+// GET INCIDENCIAS
+// ===============================
 
 app.get("/api/incidencias", (req, res) => {
-  db.all("SELECT * FROM incidencias ORDER BY fecha DESC", [], (err, rows) => {
-    if (err) {
-      return res.status(500).json({ error: err.message });
-    }
-    res.json(rows);
-  });
-});
 
-// ==========================
-// POST crear incidencia
-// ==========================
-
-app.post(
-  "/api/incidencias",
-
-  body("titulo").notEmpty(),
-  body("descripcion").notEmpty(),
-  body("prioridad").isIn(["baja", "media", "alta"]),
-
-  (req, res) => {
-
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errores: errors.array() });
-    }
-
-    const { titulo, descripcion, prioridad } = req.body;
-    const fecha = Date.now();
-
-    db.run(
-      `INSERT INTO incidencias (titulo, descripcion, prioridad, estado, fecha)
-       VALUES (?, ?, ?, ?, ?)`,
-      [titulo, descripcion, prioridad, "pendiente", fecha],
-      function (err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-
-        res.status(201).json({
-          id: this.lastID,
-          titulo,
-          descripcion,
-          prioridad,
-          estado: "pendiente",
-          fecha
-        });
-      }
-    );
-  }
-);
-
-// ==========================
-// DELETE (PROTEGIDO)
-// ==========================
-
-app.delete(
-  "/api/incidencias/:id",
-  verificarToken,
-  param("id").isInt(),
-
-  (req, res) => {
-
-    const id = req.params.id;
-
-    db.run("DELETE FROM incidencias WHERE id = ?", [id], function (err) {
+  db.all(
+    "SELECT * FROM incidencias ORDER BY fecha DESC",
+    [],
+    (err, rows) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
 
-      if (this.changes === 0) {
-        return res.status(404).json({ error: "No encontrada" });
+      res.json(rows);
+    }
+  );
+});
+
+// ===============================
+// CREAR INCIDENCIA
+// ===============================
+
+app.post("/api/incidencias", (req, res) => {
+
+  const { titulo, descripcion, prioridad } = req.body;
+  const fecha = Date.now();
+
+  db.run(
+    `INSERT INTO incidencias (titulo, descripcion, prioridad, estado, fecha)
+     VALUES (?, ?, ?, ?, ?)`,
+    [titulo, descripcion, prioridad, "pendiente", fecha],
+    function (err) {
+
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      res.status(201).json({
+        id: this.lastID,
+        titulo,
+        descripcion,
+        prioridad,
+        estado: "pendiente",
+        fecha
+      });
+    }
+  );
+});
+
+// ===============================
+// DELETE INCIDENCIA (PROTEGIDO)
+// ===============================
+
+app.delete("/api/incidencias/:id", verificarToken, (req, res) => {
+
+  const id = req.params.id;
+
+  db.run(
+    "DELETE FROM incidencias WHERE id = ?",
+    [id],
+    function (err) {
+
+      if (err) {
+        return res.status(500).json({ error: err.message });
       }
 
       res.json({ mensaje: "Eliminada correctamente" });
-    });
-  }
-);
+    }
+  );
+});
 
-// ==========================
-// PUT cambiar estado (PROTEGIDO)
-// ==========================
+// ===============================
+// CAMBIAR ESTADO (PROTEGIDO)
+// ===============================
 
-app.put(
-  "/api/incidencias/:id/estado",
-  verificarToken,
-  param("id").isInt(),
+app.put("/api/incidencias/:id/estado", verificarToken, (req, res) => {
 
-  (req, res) => {
+  const id = req.params.id;
 
-    const id = req.params.id;
+  db.get(
+    "SELECT estado FROM incidencias WHERE id = ?",
+    [id],
+    (err, row) => {
 
-    db.get("SELECT estado FROM incidencias WHERE id = ?", [id], (err, row) => {
-      if (err || !row) {
+      if (!row) {
         return res.status(404).json({ error: "No encontrada" });
       }
 
@@ -244,6 +225,7 @@ app.put(
         "UPDATE incidencias SET estado = ? WHERE id = ?",
         [nuevoEstado, id],
         function (err) {
+
           if (err) {
             return res.status(500).json({ error: err.message });
           }
@@ -251,14 +233,16 @@ app.put(
           res.json({ id, estado: nuevoEstado });
         }
       );
-    });
-  }
-);
+    }
+  );
+});
 
-// ==========================
-// Servidor
-// ==========================
+// ===============================
+// PUERTO DINÁMICO
+// ===============================
 
-app.listen(3000, () => {
-  console.log("Servidor con autenticación en http://127.0.0.1:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Servidor en puerto " + PORT);
 });
