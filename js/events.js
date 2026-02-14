@@ -1,12 +1,6 @@
-import {
-  getIncidencias,
-  agregarIncidencia,
-  eliminarIncidencia,
-  cambiarEstado,
-  actualizarIncidencia
-} from "./state.js";
-
 import { renderizar, actualizarContador } from "./render.js";
+
+const API = "http://127.0.0.1:3000/api/incidencias";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -16,21 +10,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputTitulo = document.getElementById("titulo");
   const inputDescripcion = document.getElementById("descripcion");
   const inputPrioridad = document.getElementById("prioridad");
-  const botonSubmit = formulario.querySelector("button");
 
-  let modoEdicion = false;
-  let idEditando = null;
+  async function cargarIncidencias() {
+    const res = await fetch(API);
+    const datos = await res.json();
 
-  function refrescar() {
-    const datos = getIncidencias();
     renderizar(datos, lista);
     actualizarContador(datos);
   }
 
-  refrescar();
+  cargarIncidencias();
 
-  // SUBMIT FORM
-  formulario.addEventListener("submit", function(e) {
+  // CREAR
+  formulario.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const titulo = inputTitulo.value.trim();
@@ -38,67 +30,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const prioridad = inputPrioridad.value;
 
     if (!titulo || !descripcion) {
-      alert("El título y la descripción son obligatorios.");
+      alert("Título y descripción obligatorios");
       return;
     }
 
-    if (modoEdicion) {
-      actualizarIncidencia(idEditando, {
-        titulo,
-        descripcion,
-        prioridad
-      });
-
-      modoEdicion = false;
-      idEditando = null;
-      botonSubmit.textContent = "Crear";
-    } else {
-      agregarIncidencia({
-        id: Date.now(),
-        titulo,
-        descripcion,
-        prioridad,
-        estado: "pendiente"
-      });
-    }
+    await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo, descripcion, prioridad })
+    });
 
     formulario.reset();
-    refrescar();
+    cargarIncidencias();
   });
 
-  // EVENTOS EN LISTA
-  lista.addEventListener("click", function(e) {
+  // BOTONES DINÁMICOS (delegación de eventos)
+  lista.addEventListener("click", async (e) => {
     const contenedor = e.target.closest(".incidencia");
     if (!contenedor) return;
 
-    const id = Number(contenedor.dataset.id);
+    const id = contenedor.dataset.id;
 
     // ELIMINAR
     if (e.target.classList.contains("btn-eliminar")) {
-      if (confirm("¿Seguro que quieres eliminar esta incidencia?")) {
-        eliminarIncidencia(id);
-        refrescar();
-      }
+      await fetch(`${API}/${id}`, { method: "DELETE" });
+      cargarIncidencias();
     }
 
     // CAMBIAR ESTADO
     if (e.target.classList.contains("btn-estado")) {
-      cambiarEstado(id);
-      refrescar();
-    }
-
-    // EDITAR
-    if (e.target.classList.contains("btn-editar")) {
-      const incidencia = getIncidencias().find(i => i.id === id);
-      if (!incidencia) return;
-
-      inputTitulo.value = incidencia.titulo;
-      inputDescripcion.value = incidencia.descripcion;
-      inputPrioridad.value = incidencia.prioridad;
-
-      modoEdicion = true;
-      idEditando = id;
-      botonSubmit.textContent = "Guardar cambios";
+      await fetch(`${API}/${id}/estado`, { method: "PUT" });
+      cargarIncidencias();
     }
   });
 
