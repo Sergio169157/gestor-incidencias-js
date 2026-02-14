@@ -70,3 +70,24 @@
 .btn-estado:hover {
   background-color: #1b4fbf;
 }
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: white;
+}
+
+.badge.baja {
+  background-color: #28a745;
+}
+
+.badge.media {
+  background-color: #ffc107;
+  color: black;
+}
+
+.badge.alta {
+  background-color: #dc3545;
+}
