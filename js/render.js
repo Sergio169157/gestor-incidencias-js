@@ -4,27 +4,15 @@ export function renderizar(lista, contenedor) {
   lista.forEach(incidencia => {
     const div = document.createElement("div");
 
+    // Clase para aplicar color del borde
     div.classList.add("incidencia", incidencia.prioridad);
     div.dataset.id = incidencia.id;
 
     div.innerHTML = `
       <h3>${incidencia.titulo}</h3>
       <p>${incidencia.descripcion}</p>
-
-      <p>
-        <strong>Prioridad:</strong>
-        <span class="badge ${incidencia.prioridad}">
-          ${incidencia.prioridad}
-        </span>
-      </p>
-
-      <p>
-        <strong>Estado:</strong>
-        <span class="estado-badge ${incidencia.estado}">
-          ${incidencia.estado.replace("-", " ")}
-        </span>
-      </p>
-
+      <p><strong>Prioridad:</strong> ${incidencia.prioridad}</p>
+      <p><strong>Estado:</strong> ${incidencia.estado.replace("-", " ")}</p>
       <button class="btn-eliminar">Eliminar</button>
       <button class="btn-estado">Cambiar estado</button>
     `;

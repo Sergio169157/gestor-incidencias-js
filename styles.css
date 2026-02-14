@@ -1,26 +1,95 @@
-/* BADGE PRIORIDAD */
-.badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: bold;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  background-color: #f4f6f9;
+}
+
+header {
+  background-color: #2c3e50;
+  padding: 20px;
+  text-align: center;
   color: white;
 }
 
-.badge.baja {
-  background-color: #28a745;
+main {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
 }
 
-.badge.media {
-  background-color: #ffc107;
-  color: black;
+.form-section,
+.lista-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
-.badge.alta {
-  background-color: #dc3545;
+.form-section {
+  flex: 1;
 }
 
-/* BORDE SEGÚN PRIORIDAD */
+.lista-section {
+  flex: 2;
+}
+
+/* FORM */
+form input,
+form textarea,
+form select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+form button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background-color: #2d6cdf;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+form button:hover {
+  background-color: #1b4fbf;
+}
+
+/* CONTADOR */
+.contador {
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+/* FILTROS */
+.filtros button {
+  padding: 6px 10px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+}
+
+/* TARJETAS */
+.incidencia {
+  background: #fafafa;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border-left: 5px solid #ccc;
+}
+
+/* COLOR SEGÚN PRIORIDAD */
 .incidencia.baja {
   border-left: 5px solid #28a745;
 }
@@ -33,28 +102,8 @@
   border-left: 5px solid #dc3545;
 }
 
-/* BADGE ESTADO */
-.estado-badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-}
-
-.estado-badge.pendiente {
-  background-color: #6c757d;
-}
-
-.estado-badge.en-proceso {
-  background-color: #0d6efd;
-}
-
-.estado-badge.resuelta {
-  background-color: #198754;
-}
-
-/* BOTÓN CAMBIAR ESTADO */
+/* BOTONES */
+.btn-eliminar,
 .btn-estado {
   padding: 6px 10px;
   border: none;
@@ -62,32 +111,20 @@
   cursor: pointer;
   margin-top: 8px;
   margin-right: 5px;
-  font-size: 0.8rem;
+}
+
+.btn-eliminar {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-estado {
   background-color: #2d6cdf;
   color: white;
 }
 
-.btn-estado:hover {
-  background-color: #1b4fbf;
-}
-
-.badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: white;
-}
-
-.badge.baja {
-  background-color: #28a745;
-}
-
-.badge.media {
-  background-color: #ffc107;
-  color: black;
-}
-
-.badge.alta {
-  background-color: #dc3545;
+@media (max-width: 900px) {
+  main {
+    flex-direction: column;
+  }
 }

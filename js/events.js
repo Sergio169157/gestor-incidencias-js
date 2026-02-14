@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refrescar();
 
-  // FORMULARIO
+  // AGREGAR INCIDENCIA
   formulario.addEventListener("submit", function(e) {
     e.preventDefault();
 
@@ -45,14 +45,13 @@ document.addEventListener("DOMContentLoaded", () => {
     refrescar();
   });
 
-  // CLICK EN LISTA
+  // EVENTOS EN LISTA
   lista.addEventListener("click", function(e) {
     const contenedor = e.target.closest(".incidencia");
     if (!contenedor) return;
 
     const id = Number(contenedor.dataset.id);
 
-    // ELIMINAR
     if (e.target.classList.contains("btn-eliminar")) {
       if (confirm("¿Seguro que quieres eliminar esta incidencia?")) {
         eliminarIncidencia(id);
@@ -60,7 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // CAMBIAR ESTADO
     if (e.target.classList.contains("btn-estado")) {
       cambiarEstado(id);
       refrescar();
