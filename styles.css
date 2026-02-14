@@ -1,34 +1,38 @@
+/* RESET */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
   background-color: #f4f6f9;
-  min-height: 100vh;
 }
 
+/* HEADER */
 header {
-  background-color: #1f2937;
-  color: white;
+  background-color: #2c3e50;
   padding: 20px;
   text-align: center;
+  color: white;
 }
 
+/* MAIN LAYOUT */
 main {
   display: flex;
   gap: 20px;
   padding: 20px;
+  align-items: flex-start;
 }
 
+/* SECCIONES */
 .form-section,
 .lista-section {
-  background-color: white;
+  background: white;
   padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
 .form-section {
@@ -39,110 +43,153 @@ main {
   flex: 2;
 }
 
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-input,
-textarea,
-select {
-  padding: 8px;
-  border-radius: 5px;
+/* FORMULARIO */
+form input,
+form textarea,
+form select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
   border: 1px solid #ccc;
 }
 
-button {
+form button {
+  width: 100%;
   padding: 10px;
   border: none;
-  border-radius: 5px;
-  background-color: #2563eb;
+  border-radius: 6px;
+  background-color: #2d6cdf;
   color: white;
   cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s ease;
 }
 
-button:hover {
-  background-color: #1d4ed8;
+form button:hover {
+  background-color: #1b4fbf;
 }
 
-#lista-incidencias {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.incidencia {
-  padding: 15px;
-  border-radius: 8px;
-  background-color: #f9fafb;
-  border-left: 5px solid #2563eb;
-}
-
-.incidencia h3 {
-  margin-bottom: 5px;
-}
-
-.incidencia p {
-  margin-bottom: 5px;
-}
-
-.estado {
-  cursor: pointer;
+/* CONTADOR */
+.contador {
+  margin: 15px 0;
   font-weight: bold;
 }
 
-/* Estados visuales */
-.pendiente {
-  border-left-color: #dc2626;
+/* BUSCADOR Y ORDEN */
+.buscador,
+.ordenar {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
-.en-proceso {
-  border-left-color: #f59e0b;
-}
-
-.resuelta {
-  border-left-color: #16a34a;
-}
-
+/* FILTROS */
 .filtros {
-  display: flex;
-  gap: 10px;
-  margin: 10px 0;
+  margin-bottom: 15px;
 }
 
 .filtros button {
-  padding: 6px 12px;
-  background-color: #e5e7eb;
-  color: #111;
+  padding: 6px 10px;
+  margin-right: 5px;
+  border: none;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .filtros button:hover {
-  background-color: #d1d5db;
+  background-color: #d0d0d0;
 }
 
-.contador {
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.buscador {
-  width: 100%;
-  padding: 8px;
-  margin: 10px 0;
+/* TARJETA INCIDENCIA */
+.incidencia {
+  background: #fafafa;
+  border-left: 5px solid #ccc;
+  padding: 15px;
+  margin-bottom: 15px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  transition: 0.2s ease;
 }
 
-.ordenar {
-  margin: 10px 0;
-  padding: 6px;
+.incidencia:hover {
+  transform: scale(1.01);
+}
+
+/* BADGES PRIORIDAD */
+.badge {
+  padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.filtros button.activo {
-  background-color: #2563eb;
+  font-size: 0.8rem;
   color: white;
+  font-weight: bold;
+  display: inline-block;
+  margin-left: 5px;
+}
+
+.badge.baja {
+  background-color: #28a745;
+}
+
+.badge.media {
+  background-color: #ffc107;
+  color: black;
+}
+
+.badge.alta {
+  background-color: #dc3545;
+}
+
+/* BOTONES TARJETA */
+.btn-eliminar,
+.estado {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 8px;
+  margin-right: 5px;
+  font-size: 0.8rem;
+  transition: 0.2s ease;
+}
+
+.btn-eliminar {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-eliminar:hover {
+  background-color: #b52a37;
+}
+
+.estado {
+  background-color: #2d6cdf;
+  color: white;
+}
+
+.estado:hover {
+  background-color: #1b4fbf;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  main {
+    flex-direction: column;
+  }
+}
+
+/* BORDE SEGÚN PRIORIDAD */
+.incidencia.baja {
+  border-left: 5px solid #28a745;
+}
+
+.incidencia.media {
+  border-left: 5px solid #ffc107;
+}
+
+.incidencia.alta {
+  border-left: 5px solid #dc3545;
 }

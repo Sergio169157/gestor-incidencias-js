@@ -20,12 +20,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refrescar();
 
+  // Evento del formulario para agregar una nueva incidencia
   formulario.addEventListener("submit", function(e) {
-  e.preventDefault();
-  console.log("SUBMIT FUNCIONA");
-    const titulo = document.getElementById("titulo").value;
-    const descripcion = document.getElementById("descripcion").value;
+    e.preventDefault();
+
+    const titulo = document.getElementById("titulo").value.trim();
+    const descripcion = document.getElementById("descripcion").value.trim();
     const prioridad = document.getElementById("prioridad").value;
+
+    // 🔒 VALIDACIÓN
+    if (!titulo || !descripcion) {
+      alert("El título y la descripción son obligatorios.");
+      return;
+    }
 
     agregarIncidencia({
       id: Date.now(),
@@ -39,17 +46,22 @@ document.addEventListener("DOMContentLoaded", () => {
     refrescar();
   });
 
+  // Delegación de eventos en la lista
   lista.addEventListener("click", function(e) {
     const contenedor = e.target.closest(".incidencia");
     if (!contenedor) return;
 
     const id = Number(contenedor.dataset.id);
 
+    // 🗑 Confirmación antes de eliminar
     if (e.target.classList.contains("btn-eliminar")) {
-      eliminarIncidencia(id);
-      refrescar();
+      if (confirm("¿Seguro que quieres eliminar esta incidencia?")) {
+        eliminarIncidencia(id);
+        refrescar();
+      }
     }
 
+    // 🔄 Cambio de estado
     if (e.target.classList.contains("estado")) {
       cambiarEstado(id);
       refrescar();
