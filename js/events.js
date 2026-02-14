@@ -2,7 +2,8 @@ import {
   getIncidencias,
   agregarIncidencia,
   eliminarIncidencia,
-  cambiarEstado
+  cambiarEstado,
+  editarIncidencia
 } from "./state.js";
 
 import { renderizar, actualizarContador } from "./render.js";
@@ -20,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refrescar();
 
-  // AGREGAR INCIDENCIA
+  // CREAR INCIDENCIA
   formulario.addEventListener("submit", function(e) {
     e.preventDefault();
 
@@ -52,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const id = Number(contenedor.dataset.id);
 
+    // ELIMINAR
     if (e.target.classList.contains("btn-eliminar")) {
       if (confirm("¿Seguro que quieres eliminar esta incidencia?")) {
         eliminarIncidencia(id);
@@ -59,8 +61,34 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // CAMBIAR ESTADO
     if (e.target.classList.contains("btn-estado")) {
       cambiarEstado(id);
+      refrescar();
+    }
+
+    // EDITAR
+    if (e.target.classList.contains("btn-editar")) {
+
+      const incidencia = getIncidencias().find(i => i.id === id);
+      if (!incidencia) return;
+
+      const nuevoTitulo = prompt("Nuevo título:", incidencia.titulo);
+      if (nuevoTitulo === null) return;
+
+      const nuevaDescripcion = prompt("Nueva descripción:", incidencia.descripcion);
+      if (nuevaDescripcion === null) return;
+
+      if (!nuevoTitulo.trim() || !nuevaDescripcion.trim()) {
+        alert("Los campos no pueden estar vacíos.");
+        return;
+      }
+
+      editarIncidencia(id, {
+        titulo: nuevoTitulo.trim(),
+        descripcion: nuevaDescripcion.trim()
+      });
+
       refrescar();
     }
   });

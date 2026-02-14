@@ -1,35 +1,49 @@
-let incidencias = JSON.parse(localStorage.getItem("incidencias")) || [];
+const KEY = "incidencias";
 
 export function getIncidencias() {
-  return incidencias;
+  const data = localStorage.getItem(KEY);
+  return data ? JSON.parse(data) : [];
 }
 
-export function agregarIncidencia(incidencia) {
-  incidencias.push(incidencia);
-  guardar();
+export function agregarIncidencia(nueva) {
+  const incidencias = getIncidencias();
+  incidencias.push(nueva);
+  localStorage.setItem(KEY, JSON.stringify(incidencias));
 }
 
 export function eliminarIncidencia(id) {
-  incidencias = incidencias.filter(i => i.id !== id);
-  guardar();
+  const incidencias = getIncidencias();
+  const nuevas = incidencias.filter(i => i.id !== id);
+  localStorage.setItem(KEY, JSON.stringify(nuevas));
 }
 
 export function cambiarEstado(id) {
-  const incidencia = incidencias.find(i => i.id === id);
+  const incidencias = getIncidencias();
 
+  const incidencia = incidencias.find(i => i.id === id);
   if (!incidencia) return;
 
-  if (incidencia.estado === "pendiente") {
-    incidencia.estado = "en-proceso";
-  } else if (incidencia.estado === "en-proceso") {
-    incidencia.estado = "resuelta";
-  } else {
-    incidencia.estado = "pendiente";
-  }
+  const flujo = {
+    pendiente: "en-proceso",
+    "en-proceso": "resuelta",
+    resuelta: "pendiente"
+  };
 
-  guardar();
+  if (!flujo[incidencia.estado]) return;
+
+  incidencia.estado = flujo[incidencia.estado];
+
+  localStorage.setItem(KEY, JSON.stringify(incidencias));
 }
 
-function guardar() {
-  localStorage.setItem("incidencias", JSON.stringify(incidencias));
+export function editarIncidencia(id, nuevosDatos) {
+  const incidencias = getIncidencias();
+
+  const incidencia = incidencias.find(i => i.id === id);
+  if (!incidencia) return;
+
+  incidencia.titulo = nuevosDatos.titulo;
+  incidencia.descripcion = nuevosDatos.descripcion;
+
+  localStorage.setItem(KEY, JSON.stringify(incidencias));
 }

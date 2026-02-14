@@ -4,17 +4,29 @@ export function renderizar(lista, contenedor) {
   lista.forEach(incidencia => {
     const div = document.createElement("div");
 
-    // Clase para aplicar color del borde
     div.classList.add("incidencia", incidencia.prioridad);
     div.dataset.id = incidencia.id;
+
+    // Texto dinámico del botón de estado
+    let textoBoton = "";
+
+    if (incidencia.estado === "pendiente") {
+      textoBoton = "Pasar a En proceso";
+    } else if (incidencia.estado === "en-proceso") {
+      textoBoton = "Marcar como Resuelta";
+    } else {
+      textoBoton = "Reabrir";
+    }
 
     div.innerHTML = `
       <h3>${incidencia.titulo}</h3>
       <p>${incidencia.descripcion}</p>
       <p><strong>Prioridad:</strong> ${incidencia.prioridad}</p>
       <p><strong>Estado:</strong> ${incidencia.estado.replace("-", " ")}</p>
+
       <button class="btn-eliminar">Eliminar</button>
-      <button class="btn-estado">Cambiar estado</button>
+      <button class="btn-estado">${textoBoton}</button>
+      <button class="btn-editar">Editar</button>
     `;
 
     contenedor.appendChild(div);
