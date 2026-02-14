@@ -1,187 +1,172 @@
+const API_URL = "http://127.0.0.1:3000/api";
+
 const formulario = document.getElementById("form-incidencia");
 const lista = document.getElementById("lista-incidencias");
+const buscador = document.getElementById("buscador");
+
+const btnLogin = document.getElementById("btn-login");
+const btnLogout = document.getElementById("btn-logout");
+const usuarioInfo = document.getElementById("usuario-info");
+
+let incidenciasGlobal = [];
 
 // ===============================
-// CARGAR DATOS
+// LOGIN
 // ===============================
-let incidencias = JSON.parse(localStorage.getItem("incidencias")) || [];
 
-renderizarIncidencias();
-actualizarContador();
+async function hacerLogin() {
+  const res = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: "admin",
+      password: "1234"
+    })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem("token", data.token);
+    actualizarUIAuth();
+    cargarIncidencias();
+  }
+}
+
+btnLogin.addEventListener("click", hacerLogin);
+
+btnLogout.addEventListener("click", () => {
+  localStorage.removeItem("token");
+  actualizarUIAuth();
+  cargarIncidencias();
+});
+
+function actualizarUIAuth() {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    btnLogin.style.display = "none";
+    btnLogout.style.display = "inline-block";
+
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    usuarioInfo.textContent = "Conectado como: " + payload.username;
+  } else {
+    btnLogin.style.display = "inline-block";
+    btnLogout.style.display = "none";
+    usuarioInfo.textContent = "No autenticado";
+  }
+}
+
+actualizarUIAuth();
+
+// ===============================
+// CARGAR INCIDENCIAS
+// ===============================
+
+async function cargarIncidencias() {
+  const res = await fetch(`${API_URL}/incidencias`);
+  incidenciasGlobal = await res.json();
+  renderizarIncidencias(incidenciasGlobal);
+  actualizarContador(incidenciasGlobal);
+}
+
+cargarIncidencias();
 
 // ===============================
 // CREAR INCIDENCIA
 // ===============================
-formulario.addEventListener("submit", function(e) {
+
+formulario.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const titulo = document.getElementById("titulo").value;
   const descripcion = document.getElementById("descripcion").value;
   const prioridad = document.getElementById("prioridad").value;
 
-  const incidencia = {
-    id: Date.now(),
-    titulo,
-    descripcion,
-    prioridad,
-    estado: "pendiente"
-  };
-
-  incidencias.push(incidencia);
-  guardarEnLocalStorage();
-  renderizarIncidencias();
-  actualizarContador();
+  await fetch(`${API_URL}/incidencias`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ titulo, descripcion, prioridad })
+  });
 
   formulario.reset();
+  cargarIncidencias();
 });
 
 // ===============================
-// RENDERIZAR TODAS LAS INCIDENCIAS
+// RENDERIZAR
 // ===============================
-function renderizarIncidencias(listaFiltrada = incidencias) {
+
+function renderizarIncidencias(listaFiltrada) {
   lista.innerHTML = "";
+  const token = localStorage.getItem("token");
 
   listaFiltrada.forEach(incidencia => {
+
+    const fechaFormateada = new Date(incidencia.fecha)
+      .toLocaleString("es-ES");
+
     const div = document.createElement("div");
-    div.classList.add("incidencia", incidencia.estado);
-    div.dataset.id = incidencia.id;
+    div.classList.add("incidencia");
 
     div.innerHTML = `
       <h3>${incidencia.titulo}</h3>
       <p>${incidencia.descripcion}</p>
       <p><strong>Prioridad:</strong> ${incidencia.prioridad}</p>
-      <p class="estado">Estado: ${incidencia.estado.replace("-", " ")}</p>
-      <button class="btn-eliminar">Eliminar</button>
+      <p><strong>Estado:</strong> ${incidencia.estado}</p>
+      <p><small>Creada: ${fechaFormateada}</small></p>
+      ${token ? '<button class="btn-eliminar">Eliminar</button>' : ''}
+      ${token ? '<button class="btn-estado">Cambiar Estado</button>' : ''}
     `;
 
-    const botonEliminar = div.querySelector(".btn-eliminar");
-    const estadoTexto = div.querySelector(".estado");
+    if (token) {
+      div.querySelector(".btn-eliminar").addEventListener("click", async () => {
+        await fetch(`${API_URL}/incidencias/${incidencia.id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        cargarIncidencias();
+      });
 
-    // ELIMINAR
-    botonEliminar.addEventListener("click", function() {
-      incidencias = incidencias.filter(item => item.id !== incidencia.id);
-      guardarEnLocalStorage();
-      renderizarIncidencias();
-      actualizarContador();
-    });
-
-    // CAMBIAR ESTADO
-    estadoTexto.addEventListener("click", function() {
-
-      if (incidencia.estado === "pendiente") {
-        incidencia.estado = "en-proceso";
-      } else if (incidencia.estado === "en-proceso") {
-        incidencia.estado = "resuelta";
-      } else {
-        incidencia.estado = "pendiente";
-      }
-
-      guardarEnLocalStorage();
-      renderizarIncidencias();
-      actualizarContador();
-    });
+      div.querySelector(".btn-estado").addEventListener("click", async () => {
+        await fetch(`${API_URL}/incidencias/${incidencia.id}/estado`, {
+          method: "PUT",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        cargarIncidencias();
+      });
+    }
 
     lista.appendChild(div);
   });
 }
 
 // ===============================
-// FILTROS
-// ===============================
-let filtroActual = "todas";
-
-const botonesFiltro = document.querySelectorAll(".filtros button");
-
-botonesFiltro.forEach(boton => {
-  boton.addEventListener("click", function() {
-
-    botonesFiltro.forEach(b => b.classList.remove("activo"));
-    boton.classList.add("activo");
-
-    filtroActual = boton.dataset.estado;
-    aplicarFiltros();
-  });
-});
-
 // BUSCADOR
-const buscador = document.getElementById("buscador");
+// ===============================
 
-buscador.addEventListener("input", function() {
-  aplicarFiltros();
+buscador.addEventListener("input", () => {
   const texto = buscador.value.toLowerCase();
 
-  const filtradas = incidencias.filter(incidencia =>
-    incidencia.titulo.toLowerCase().includes(texto) ||
-    incidencia.descripcion.toLowerCase().includes(texto)
+  const filtradas = incidenciasGlobal.filter(i =>
+    i.titulo.toLowerCase().includes(texto) ||
+    i.descripcion.toLowerCase().includes(texto)
   );
 
   renderizarIncidencias(filtradas);
 });
 
-// ordenar por fecha o prioridad
-const selectorOrden = document.getElementById("ordenar");
-
-selectorOrden.addEventListener("change", function() {
-
-  if (selectorOrden.value === "fecha") {
-    incidencias.sort((a, b) => b.id - a.id);
-  }
-
-  if (selectorOrden.value === "prioridad") {
-
-    const ordenPrioridad = {
-      alta: 3,
-      media: 2,
-      baja: 1
-    };
-
-    incidencias.sort((a, b) =>
-      ordenPrioridad[b.prioridad] - ordenPrioridad[a.prioridad]
-    );
-  }
-
-  renderizarIncidencias();
-});
-
 // ===============================
 // CONTADOR
 // ===============================
-function actualizarContador() {
-  const pendientes = incidencias.filter(i => i.estado === "pendiente").length;
-  const enProceso = incidencias.filter(i => i.estado === "en-proceso").length;
-  const resueltas = incidencias.filter(i => i.estado === "resuelta").length;
 
-  document.getElementById("count-pendiente").textContent = pendientes;
-  document.getElementById("count-proceso").textContent = enProceso;
-  document.getElementById("count-resuelta").textContent = resueltas;
-}
+function actualizarContador(incidencias) {
+  document.getElementById("count-pendiente").textContent =
+    incidencias.filter(i => i.estado === "pendiente").length;
 
-// ===============================
-// GUARDAR DATOS
-// ===============================
-function guardarEnLocalStorage() {
-  localStorage.setItem("incidencias", JSON.stringify(incidencias));
-}
-// APLICAR FILTROS
+  document.getElementById("count-proceso").textContent =
+    incidencias.filter(i => i.estado === "en-proceso").length;
 
-function aplicarFiltros() {
-
-  let resultado = [...incidencias];
-
-  if (filtroActual !== "todas") {
-    resultado = resultado.filter(
-      incidencia => incidencia.estado === filtroActual
-    );
-  }
-
-  const texto = buscador.value.toLowerCase();
-
-  if (texto) {
-    resultado = resultado.filter(incidencia =>
-      incidencia.titulo.toLowerCase().includes(texto) ||
-      incidencia.descripcion.toLowerCase().includes(texto)
-    );
-  }
-
-  renderizarIncidencias(resultado);
+  document.getElementById("count-resuelta").textContent =
+    incidencias.filter(i => i.estado === "resuelta").length;
 }

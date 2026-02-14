@@ -7,11 +7,18 @@
 </head>
 <body>
 
-  <header>
+  <header class="header">
     <h1>Gestor de Incidencias</h1>
+
+    <div class="auth">
+      <span id="usuario-info">No autenticado</span>
+      <button id="btn-login">Login</button>
+      <button id="btn-logout" style="display:none;">Logout</button>
+    </div>
   </header>
 
   <main>
+
     <section class="form-section">
       <h2>Nueva Incidencia</h2>
 
@@ -32,37 +39,25 @@
     <section class="lista-section">
       <h2>Incidencias</h2>
 
-    <div class="contador">
+      <div class="contador">
         Pendientes: <span id="count-pendiente">0</span> |
         En proceso: <span id="count-proceso">0</span> |
         Resueltas: <span id="count-resuelta">0</span>
-    </div>
+      </div>
 
-    <!-- Buscador -->
-        <input 
+      <input 
         type="text" 
         id="buscador" 
         placeholder="Buscar por título o descripción..."
-        class="buscador"
-        />
-
-        <select id="ordenar" class="ordenar">
-    <option value="fecha">Ordenar por fecha</option>
-    <option value="prioridad">Ordenar por prioridad</option>
-        </select>
-
-    <!-- Filtros -->
-      <div class="filtros">
-        <button data-estado="todas">Todas</button>
-        <button data-estado="pendiente">Pendientes</button>
-        <button data-estado="en-proceso">En proceso</button>
-        <button data-estado="resuelta">Resueltas</button>
-      </div>
+      />
 
       <div id="lista-incidencias"></div>
+
     </section>
+
   </main>
 
-    <script type="module" src="js/events.js"></script>
+  <script src="app.js"></script>
+
 </body>
 </html>
