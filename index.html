@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestor de Incidencias</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header>
+    <h1>Gestor de Incidencias</h1>
+  </header>
+
+  <main>
+    <section class="form-section">
+      <h2>Nueva Incidencia</h2>
+
+      <form id="form-incidencia">
+        <input type="text" id="titulo" placeholder="Título" required>
+        <textarea id="descripcion" placeholder="Descripción" required></textarea>
+
+        <select id="prioridad">
+          <option value="baja">Baja</option>
+          <option value="media">Media</option>
+          <option value="alta">Alta</option>
+        </select>
+
+        <button type="submit">Crear</button>
+      </form>
+    </section>
+
+    <section class="lista-section">
+      <h2>Incidencias</h2>
+
+    <div class="contador">
+        Pendientes: <span id="count-pendiente">0</span> |
+        En proceso: <span id="count-proceso">0</span> |
+        Resueltas: <span id="count-resuelta">0</span>
+    </div>
+
+    <!-- Buscador -->
+        <input 
+        type="text" 
+        id="buscador" 
+        placeholder="Buscar por título o descripción..."
+        class="buscador"
+        />
+
+        <select id="ordenar" class="ordenar">
+    <option value="fecha">Ordenar por fecha</option>
+    <option value="prioridad">Ordenar por prioridad</option>
+        </select>
+
+    <!-- Filtros -->
+      <div class="filtros">
+        <button data-estado="todas">Todas</button>
+        <button data-estado="pendiente">Pendientes</button>
+        <button data-estado="en-proceso">En proceso</button>
+        <button data-estado="resuelta">Resueltas</button>
+      </div>
+
+      <div id="lista-incidencias"></div>
+    </section>
+  </main>
+
+    <script type="module" src="js/events.js"></script>
+</body>
+</html>
