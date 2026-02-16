@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestor de Incidencias</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <h2 class="logo">Incidencias</h2>
+      <nav>
+        <button id="nav-dashboard" class="nav-btn active">Dashboard</button>
+        <button id="nav-incidencias" class="nav-btn">Incidencias</button>
+        <button id="nav-estadisticas" class="nav-btn">Estadísticas</button>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+
+      <!-- HEADER -->
+      <header class="topbar">
+        <div class="user-info">
+          <span id="usuario-actual">No autenticado</span>
+          <button id="login-btn">Login</button>
+        </div>
+      </header>
+
+      <section class="content">
+
+        <!-- MÉTRICAS -->
+        <div class="metrics">
+          <div class="card-metric">
+            <h3>Pendientes</h3>
+            <p id="count-pendiente">0</p>
+          </div>
+
+          <div class="card-metric">
+            <h3>En proceso</h3>
+            <p id="count-proceso">0</p>
+          </div>
+
+          <div class="card-metric">
+            <h3>Resueltas</h3>
+            <p id="count-resuelta">0</p>
+          </div>
+        </div>
+
+        <!-- PANEL -->
+        <div class="panel">
+
+          <div class="panel-header">
+            <h2>Incidencias</h2>
+            <button id="btn-nueva" class="btn-primary">+ Nueva Incidencia</button>
+          </div>
+
+          <input 
+            type="text" 
+            id="buscador" 
+            placeholder="Buscar incidencias..."
+            class="buscador"
+          />
+
+          <div id="lista-incidencias" class="lista-incidencias"></div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-incidencia" class="modal">
+    <div class="modal-content">
+      <h2>Nueva Incidencia</h2>
+
+      <input type="text" id="modal-titulo" placeholder="Título" />
+      <textarea id="modal-descripcion" placeholder="Descripción"></textarea>
+
+      <select id="modal-prioridad">
+        <option value="baja">Baja</option>
+        <option value="media">Media</option>
+        <option value="alta">Alta</option>
+      </select>
+
+      <div class="modal-buttons">
+        <button id="modal-cancelar" class="btn-secondary">Cancelar</button>
+        <button id="modal-crear" class="btn-primary">Crear</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+
+</body>
+</html>
