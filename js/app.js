@@ -1,4 +1,5 @@
 const API = "https://gestor-incidencias-js.onrender.com";
+
 // ==========================
 // INICIO APP
 // ==========================
@@ -38,7 +39,7 @@ function manejarClicksGlobal(e) {
 
   if (e.target.matches("#nav-estadisticas")) {
     mostrarVista("estadisticasView");
-    cargarIncidencias(); // 👈 importante para actualizar números
+    cargarIncidencias();
   }
 }
 
@@ -93,11 +94,11 @@ async function login() {
     }
 
     localStorage.setItem("token", data.token);
-
-    // 🔥 GUARDAMOS ROL (CLAVE)
     localStorage.setItem("usuario", JSON.stringify(data.user));
 
-    document.getElementById("userStatus").innerText = "Logueado como " + data.user.usuario;
+    document.getElementById("userStatus").innerText =
+      "Logueado como " + data.user.usuario;
+
     document.getElementById("loginBox").style.display = "none";
 
     cargarIncidencias();
@@ -121,7 +122,7 @@ async function eliminarIncidencia(id) {
 
   if (!confirm("¿Eliminar incidencia?")) return;
 
-  const res = await fetch(API + "/incidencias/" + id, {
+  const res = await fetch(API + "/api/incidencias/" + id, {
     method: "DELETE",
     headers: {
       "Authorization": "Bearer " + token
@@ -148,7 +149,7 @@ async function cambiarEstado(id, estado) {
     return;
   }
 
-  await fetch(API + "/incidencias/" + id, {
+  await fetch(API + "/api/incidencias/" + id, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -162,17 +163,19 @@ async function cambiarEstado(id, estado) {
 
 
 // ==========================
-// CARGAR INCIDENCIAS + CONTADORES 🔥
+// CARGAR INCIDENCIAS
 // ==========================
 async function cargarIncidencias() {
   const token = localStorage.getItem("token");
 
-  const url = token
-    ? API + "/incidencias"
-    : API + "/incidencias/public";
+  const url = token && token !== "token_fake_123"
+    ? API + "/api/incidencias"
+    : API + "/api/incidencias/public";
 
   const res = await fetch(url, {
-    headers: token ? { "Authorization": "Bearer " + token } : {}
+    headers: token && token !== "token_fake_123"
+      ? { "Authorization": "Bearer " + token }
+      : {}
   });
 
   const data = await res.json();
@@ -188,17 +191,17 @@ async function cargarIncidencias() {
     if (i.estado === "resuelta") resueltas++;
   });
 
-  // 🔥 ACTUALIZAR DASHBOARD
+  // DASHBOARD
   document.getElementById("pendientes").textContent = pendientes;
   document.getElementById("proceso").textContent = proceso;
   document.getElementById("resueltas").textContent = resueltas;
 
-  // 🔥 ACTUALIZAR ESTADÍSTICAS
+  // ESTADÍSTICAS
   document.getElementById("pendientes2").textContent = pendientes;
   document.getElementById("proceso2").textContent = proceso;
   document.getElementById("resueltas2").textContent = resueltas;
 
-  // 🔄 LISTA
+  // LISTA
   const lista = document.getElementById("lista-incidencias");
   if (!lista) return;
 
@@ -224,7 +227,6 @@ async function cargarIncidencias() {
       botones += `<button class="btn-resuelta" data-id="${i.id}">Resuelta</button>`;
     }
 
-    // 🔒 SOLO ADMIN
     if (usuario && usuario.rol === "admin") {
       botones += `<button class="btn-delete" data-id="${i.id}" style="background:red;color:white;">Eliminar</button>`;
     }
@@ -263,15 +265,14 @@ document.addEventListener("submit", async (e) => {
 
     const titulo = document.getElementById("titulo").value;
     const descripcion = document.getElementById("descripcion").value;
-    const email = document.getElementById("email").value;
 
     try {
-      const res = await fetch(API + "/incidencias/public", {
+      const res = await fetch(API + "/api/incidencias/public", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ titulo, descripcion, email })
+        body: JSON.stringify({ titulo, descripcion })
       });
 
       if (!res.ok) {
