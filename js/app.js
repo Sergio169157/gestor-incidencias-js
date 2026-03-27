@@ -71,14 +71,14 @@ function manejarClicksIncidencias(e) {
 
 
 // ==========================
-// LOGIN
+// LOGIN (ARREGLADO 🔥)
 // ==========================
 async function login() {
   const usuario = document.getElementById("usuario").value;
   const password = document.getElementById("password").value;
 
   try {
-    const res = await fetch(API + "/auth/login", {
+    const res = await fetch(API + "/api/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
