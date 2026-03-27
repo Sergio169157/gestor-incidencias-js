@@ -71,7 +71,7 @@ function manejarClicksIncidencias(e) {
 
 
 // ==========================
-// LOGIN (ARREGLADO 🔥)
+// LOGIN (CORREGIDO 🔥)
 // ==========================
 async function login() {
   const usuario = document.getElementById("usuario").value;
@@ -93,11 +93,19 @@ async function login() {
       return;
     }
 
+    // Guardar token
     localStorage.setItem("token", data.token);
-    localStorage.setItem("usuario", JSON.stringify(data.user));
+
+    // Adaptar datos del usuario (según backend)
+    const userData = data.user || {
+      usuario: data.usuario,
+      rol: data.rol
+    };
+
+    localStorage.setItem("usuario", JSON.stringify(userData));
 
     document.getElementById("userStatus").innerText =
-      "Logueado como " + data.user.usuario;
+      "Logueado como " + (userData.usuario || "usuario");
 
     document.getElementById("loginBox").style.display = "none";
 
@@ -180,7 +188,7 @@ async function cargarIncidencias() {
 
   const data = await res.json();
 
-  // 🔢 CONTADORES
+  // CONTADORES
   let pendientes = 0;
   let proceso = 0;
   let resueltas = 0;
