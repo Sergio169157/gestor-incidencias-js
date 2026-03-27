@@ -1,33 +1,25 @@
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// ===============================
-// RUTAS API
-// ===============================
+// RUTAS
+const authRoutes = require("./routes/auth");
+const incidenciasRoutes = require("./routes/incidencias");
 
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/incidencias", require("./routes/incidencias"));
+app.use("/api/auth", authRoutes);
+app.use("/api/incidencias", incidenciasRoutes);
 
-// ===============================
-// SERVIR FRONTEND (SI ESTÁ FUERA)
-// ===============================
+// TEST
+app.get("/", (req, res) => {
+  res.send("API funcionando");
+});
 
-app.use(express.static(path.join(__dirname, "../")));
-
-// ⚠️ ELIMINAMOS el app.get("*") que causaba el error
-
-// ===============================
-// SERVIDOR
-// ===============================
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor funcionando en http://localhost:${PORT}`);
+// SERVER
+app.listen(3000, () => {
+  console.log("🔥 SERVIDOR ACTIVO 🔥");
+  console.log("http://localhost:3000");
 });

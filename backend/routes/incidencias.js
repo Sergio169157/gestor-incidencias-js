@@ -1,111 +1,77 @@
 const express = require("express");
 const router = express.Router();
-const db = require("../db");
-const verificarToken = require("../middleware/auth");
+const authMiddleware = require("../middleware/auth");
 
-// ===============================
-// OBTENER INCIDENCIAS
-// ===============================
-router.get("/", verificarToken, (req, res) => {
+// DATOS FAKE (puedes cambiarlo luego por BD)
+let incidencias = [
+  { id: 1, titulo: "Error login", descripcion: "No funciona", estado: "pendiente", usuario: "anonimo" }
+];
 
-  db.all("SELECT * FROM incidencias ORDER BY id DESC", [], (err, rows) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error al obtener incidencias" });
-    }
-    res.json(rows);
-  });
 
+// =========================
+// 🟢 CREAR (PUBLICO)
+// =========================
+router.post("/public", (req, res) => {
+  const { titulo, descripcion } = req.body;
+
+  const nueva = {
+    id: Date.now(),
+    titulo,
+    descripcion,
+    estado: "pendiente",
+    usuario: "anonimo"
+  };
+
+  incidencias.push(nueva);
+
+  res.json(nueva);
 });
 
-// ===============================
-// CREAR INCIDENCIA
-// ===============================
-router.post("/", verificarToken, (req, res) => {
 
-  const { titulo, descripcion, prioridad } = req.body;
+// =========================
+// 🟢 VER PUBLICO
+// =========================
+router.get("/public", (req, res) => {
+  res.json(incidencias);
+});
 
-  if (!titulo || !descripcion) {
-    return res.status(400).json({ message: "Título y descripción obligatorios" });
-  }
 
-  db.run(
-    "INSERT INTO incidencias (titulo, descripcion, prioridad, estado, fecha) VALUES (?, ?, ?, 'Pendiente', datetime('now'))",
-    [titulo, descripcion, prioridad],
-    function (err) {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Error al crear incidencia" });
-      }
-      res.json({ message: "Incidencia creada correctamente" });
-    }
+// =========================
+// 🔐 VER PRIVADO (logueado)
+// =========================
+router.get("/", authMiddleware, (req, res) => {
+  res.json(incidencias);
+});
+
+
+// =========================
+// 🔐 CAMBIAR ESTADO
+// =========================
+router.put("/:id", authMiddleware, (req, res) => {
+  const { estado } = req.body;
+
+  incidencias = incidencias.map(i =>
+    i.id == req.params.id ? { ...i, estado } : i
   );
 
+  res.json({ ok: true });
 });
 
-// ===============================
-// ELIMINAR INCIDENCIA
-// ===============================
-router.delete("/:id", verificarToken, (req, res) => {
 
-  const { id } = req.params;
+// =========================
+// 🔥 BORRAR (SOLO ADMIN)
+// =========================
+router.delete("/:id", authMiddleware, (req, res) => {
 
-  db.run("DELETE FROM incidencias WHERE id = ?", [id], function (err) {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error al eliminar incidencia" });
-    }
-    res.json({ message: "Incidencia eliminada correctamente" });
-  });
+  // 🔒 CONTROL DE ROL
+  if (!req.user || req.user.rol !== "admin") {
+    return res.status(403).json({ msg: "Solo admin puede eliminar" });
+  }
 
+  incidencias = incidencias.filter(i => i.id != req.params.id);
+
+  res.json({ ok: true });
 });
 
-// ===============================
-// CAMBIAR ESTADO
-// ===============================
-router.put("/:id/estado", verificarToken, (req, res) => {
-
-  const { id } = req.params;
-
-  db.get("SELECT estado FROM incidencias WHERE id = ?", [id], (err, row) => {
-
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error al buscar incidencia" });
-    }
-
-    if (!row) {
-      return res.status(404).json({ message: "Incidencia no encontrada" });
-    }
-
-    let nuevoEstado;
-
-    switch (row.estado) {
-      case "Pendiente":
-        nuevoEstado = "En proceso";
-        break;
-      case "En proceso":
-        nuevoEstado = "Resuelta";
-        break;
-      default:
-        nuevoEstado = "Pendiente";
-    }
-
-    db.run(
-      "UPDATE incidencias SET estado = ? WHERE id = ?",
-      [nuevoEstado, id],
-      function (err) {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ message: "Error al actualizar estado" });
-        }
-
-        res.json({ message: "Estado actualizado correctamente" });
-      }
-    );
-
-  });
-
-});
 
 module.exports = router;

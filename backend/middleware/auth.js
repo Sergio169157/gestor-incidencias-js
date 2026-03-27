@@ -1,23 +1,17 @@
-const jwt = require("jsonwebtoken");
-const { JWT_SECRET } = require("../config.js");
+module.exports = (req, res, next) => {
+  const token = req.headers.authorization;
 
-function verificarToken(req, res, next) {
-
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ message: "Token requerido" });
+  // 🔴 SIN TOKEN
+  if (!token) {
+    return res.status(401).json({ msg: "No autorizado" });
   }
 
-  const token = authHeader.split(" ")[1];
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ message: "Token inválido" });
+  // 🧪 SIMULACIÓN SIMPLE (puedes mejorar luego)
+  if (token === "admin") {
+    req.user = { usuario: "admin", rol: "admin" };
+  } else {
+    req.user = { usuario: "user", rol: "user" };
   }
-}
 
-module.exports = verificarToken;
+  next();
+};

@@ -1,45 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const db = require("../db");
-const { JWT_SECRET } = require("../config.js");
 
+// LOGIN
 router.post("/login", (req, res) => {
+  const { usuario, password } = req.body;
 
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ message: "Datos incompletos" });
+  if (usuario === "admin" && password === "1234") {
+    return res.json({
+      token: "token_fake_123"
+    });
   }
 
-  db.get("SELECT * FROM usuarios WHERE username = ?", [username], async (err, user) => {
-
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ message: "Error interno" });
-    }
-
-    if (!user) {
-      return res.status(401).json({ message: "Credenciales incorrectas" });
-    }
-
-    const passwordValida = await bcrypt.compare(password, user.password);
-
-    if (!passwordValida) {
-      return res.status(401).json({ message: "Credenciales incorrectas" });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username, rol: user.rol },
-      JWT_SECRET,
-      { expiresIn: "2h" }
-    );
-
-    res.json({ token });
-
+  res.status(401).json({
+    error: "Credenciales incorrectas"
   });
-
 });
 
 module.exports = router;
