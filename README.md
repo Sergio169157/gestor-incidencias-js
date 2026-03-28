@@ -1,14 +1,15 @@
 # 🛠️ Sistema de Gestión de Incidencias (Helpdesk IT)
 
-Aplicación web fullstack para la gestión de incidencias en entornos de soporte técnico (Helpdesk IT).
+Aplicación web fullstack para la gestión de incidencias en entornos de soporte técnico.
+
+---
 
 ## 🌐 Demo
+👉 https://gestor-incidencias.netlify.app  
 
-👉 https://gestor-incidencias.netlify.app
 ---
 
 ## 📌 Descripción
-
 Este proyecto simula un sistema real de gestión de incidencias utilizado en departamentos IT.  
 Permite a los usuarios reportar problemas y a los administradores gestionarlos mediante un panel centralizado.
 
@@ -16,7 +17,7 @@ Permite a los usuarios reportar problemas y a los administradores gestionarlos m
 
 ## ⚙️ Funcionalidades
 
-- 🔐 Autenticación de usuario
+- 🔐 Autenticación de usuario (JWT)
 - 📝 Creación de incidencias
 - 🔄 Cambio de estado (pendiente, proceso, resuelta)
 - 🗑️ Eliminación de incidencias (solo admin)
@@ -24,13 +25,14 @@ Permite a los usuarios reportar problemas y a los administradores gestionarlos m
 - 🌍 API REST pública y privada
 
 ---
+---
 
 ## 🧠 Qué demuestra este proyecto
 
 - Arquitectura cliente-servidor (frontend + backend)
 - Consumo de API REST con `fetch`
 - Gestión de estado en frontend
-- Control de acceso mediante token
+- Control de acceso mediante JWT
 - Diseño de endpoints protegidos
 - Lógica CRUD completa
 
@@ -51,5 +53,8 @@ Permite a los usuarios reportar problemas y a los administradores gestionarlos m
 - Netlify (frontend)
 
 ---
-## 🚀 Proyecto actualizado
 
+## 👨‍💻 Autor
+
+Sergio  
+Proyecto orientado a portfolio profesional IT 💼
