@@ -2,7 +2,9 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/auth");
 
-// Simulación de base de datos
+// =========================
+// 🗄️ BASE DE DATOS SIMULADA
+// =========================
 let incidencias = [
   {
     id: 1,
@@ -14,42 +16,47 @@ let incidencias = [
 ];
 
 // =========================
-// 🔐 CREAR INCIDENCIA (PROTEGIDO)
+// 🔐 CREAR INCIDENCIA
 // =========================
 router.post("/", authMiddleware, (req, res) => {
-  const { titulo, descripcion } = req.body;
+  try {
+    const { titulo, descripcion } = req.body;
 
-  // Validación básica
-  if (!titulo || titulo.length < 3) {
-    return res.status(400).json({ error: "Título inválido" });
+    if (!titulo || titulo.length < 3) {
+      return res.status(400).json({ error: "Título inválido" });
+    }
+
+    if (!descripcion || descripcion.length < 3) {
+      return res.status(400).json({ error: "Descripción inválida" });
+    }
+
+    const nueva = {
+      id: Date.now(),
+      titulo,
+      descripcion,
+      estado: "pendiente",
+      usuario: req.user.usuario || "anonimo" // 🔥 evita undefined
+    };
+
+    incidencias.push(nueva);
+
+    res.json(nueva);
+
+  } catch (error) {
+    console.error("ERROR CREAR:", error);
+    res.status(500).json({ error: "Error interno" });
   }
-
-  if (!descripcion || descripcion.length < 3) {
-    return res.status(400).json({ error: "Descripción inválida" });
-  }
-
-  const nueva = {
-    id: Date.now(),
-    titulo,
-    descripcion,
-    estado: "pendiente",
-    usuario: req.user.usuario // 🔥 usuario real del token
-  };
-
-  incidencias.push(nueva);
-
-  res.json(nueva);
 });
 
 // =========================
-// 🟢 VER PUBLICO (OPCIONAL)
+// 🟢 VER PUBLICO
 // =========================
 router.get("/public", (req, res) => {
   res.json(incidencias);
 });
 
 // =========================
-// 🔐 VER PRIVADO (LOGUEADO)
+// 🔐 VER PRIVADO
 // =========================
 router.get("/", authMiddleware, (req, res) => {
   res.json(incidencias);
@@ -59,31 +66,62 @@ router.get("/", authMiddleware, (req, res) => {
 // 🔐 CAMBIAR ESTADO
 // =========================
 router.put("/:id", authMiddleware, (req, res) => {
-  const { estado } = req.body;
+  try {
+    const { estado } = req.body;
 
-  if (!["pendiente", "proceso", "resuelta"].includes(estado)) {
-    return res.status(400).json({ error: "Estado inválido" });
+    if (!estado) {
+      return res.status(400).json({ error: "Estado requerido" });
+    }
+
+    if (!["pendiente", "proceso", "resuelta"].includes(estado)) {
+      return res.status(400).json({ error: "Estado inválido" });
+    }
+
+    let encontrada = false;
+
+    incidencias = incidencias.map(i => {
+      if (i.id == req.params.id) {
+        encontrada = true;
+        return { ...i, estado };
+      }
+      return i;
+    });
+
+    if (!encontrada) {
+      return res.status(404).json({ error: "Incidencia no encontrada" });
+    }
+
+    res.json({ ok: true });
+
+  } catch (error) {
+    console.error("ERROR UPDATE:", error);
+    res.status(500).json({ error: "Error interno" });
   }
-
-  incidencias = incidencias.map(i =>
-    i.id == req.params.id ? { ...i, estado } : i
-  );
-
-  res.json({ ok: true });
 });
 
 // =========================
 // 🔥 BORRAR (SOLO ADMIN)
 // =========================
 router.delete("/:id", authMiddleware, (req, res) => {
+  try {
+    if (!req.user || req.user.rol !== "admin") {
+      return res.status(403).json({ error: "Solo admin puede eliminar" });
+    }
 
-  if (!req.user || req.user.rol !== "admin") {
-    return res.status(403).json({ msg: "Solo admin puede eliminar" });
+    const antes = incidencias.length;
+
+    incidencias = incidencias.filter(i => i.id != req.params.id);
+
+    if (incidencias.length === antes) {
+      return res.status(404).json({ error: "Incidencia no encontrada" });
+    }
+
+    res.json({ ok: true });
+
+  } catch (error) {
+    console.error("ERROR DELETE:", error);
+    res.status(500).json({ error: "Error interno" });
   }
-
-  incidencias = incidencias.filter(i => i.id != req.params.id);
-
-  res.json({ ok: true });
 });
 
 module.exports = router;

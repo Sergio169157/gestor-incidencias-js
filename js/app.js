@@ -1,9 +1,38 @@
 const API = "https://gestor-incidencias-js.onrender.com";
+
+// ==========================
+// UTILIDADES
+// ==========================
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function getHeaders(json = false) {
+  const headers = {};
+
+  if (json) headers["Content-Type"] = "application/json";
+
+  const token = getToken();
+  if (token) headers["Authorization"] = "Bearer " + token;
+
+  return headers;
+}
+
 // ==========================
 // INICIO APP
 // ==========================
 document.addEventListener("DOMContentLoaded", () => {
-  cargarIncidencias();
+
+  const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+  if (usuario) {
+    document.getElementById("userStatus").innerText =
+      "Logueado como " + usuario.usuario;
+  }
+
+  if (getToken()) {
+    cargarIncidencias();
+  }
 
   const lista = document.getElementById("lista-incidencias");
   if (lista) {
@@ -42,11 +71,47 @@ function manejarClicksGlobal(e) {
 }
 
 // ==========================
-// EVENTOS INCIDENCIAS
+// LOGIN
+// ==========================
+async function login() {
+  const usuario = document.getElementById("usuario").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    const res = await fetch(API + "/api/auth/login", {
+      method: "POST",
+      headers: getHeaders(true),
+      body: JSON.stringify({ usuario, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Error en login");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("usuario", JSON.stringify(data.user));
+
+    document.getElementById("userStatus").innerText =
+      "Logueado como " + data.user.usuario;
+
+    document.getElementById("loginBox").style.display = "none";
+
+    cargarIncidencias();
+
+  } catch (error) {
+    console.error(error);
+    alert("Error de conexión");
+  }
+}
+
+// ==========================
+// INCIDENCIAS - CLICK
 // ==========================
 function manejarClicksIncidencias(e) {
   const id = e.target.dataset.id;
-
   if (!id) return;
 
   if (e.target.classList.contains("btn-delete")) {
@@ -67,135 +132,94 @@ function manejarClicksIncidencias(e) {
 }
 
 // ==========================
-// LOGIN
+// ELIMINAR
 // ==========================
-async function login() {
-  const usuario = document.getElementById("usuario").value;
-  const password = document.getElementById("password").value;
+async function eliminarIncidencia(id) {
+
+  if (!confirm("¿Eliminar incidencia?")) return;
 
   try {
-    const res = await fetch(API + "/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ usuario, password })
+    const res = await fetch(API + "/api/incidencias/" + id, {
+      method: "DELETE",
+      headers: getHeaders()
     });
 
-    const data = await res.json();
-
-    if (!res.ok || !data.token) {
-      alert("Credenciales incorrectas");
+    if (res.status === 401) {
+      cerrarSesion();
       return;
     }
 
-    localStorage.setItem("token", data.token);
-
-    const userData = data.user || {
-      usuario: data.usuario,
-      rol: data.rol
-    };
-
-    localStorage.setItem("usuario", JSON.stringify(userData));
-
-    document.getElementById("userStatus").innerText =
-      "Logueado como " + (userData.usuario || "usuario");
-
-    document.getElementById("loginBox").style.display = "none";
+    if (!res.ok) {
+      alert("Error al eliminar");
+      return;
+    }
 
     cargarIncidencias();
 
   } catch (error) {
-    console.error("Error login:", error);
-    alert("Error de conexión");
+    console.error(error);
   }
-}
-
-// ==========================
-// ELIMINAR
-// ==========================
-async function eliminarIncidencia(id) {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    alert("Debes iniciar sesión");
-    return;
-  }
-
-  if (!confirm("¿Eliminar incidencia?")) return;
-
-  const res = await fetch(API + "/api/incidencias/" + id, {
-    method: "DELETE",
-    headers: {
-      "Authorization": "Bearer " + token
-    }
-  });
-
-  if (res.status === 401) {
-    alert("Sesión expirada");
-    localStorage.removeItem("token");
-    return;
-  }
-
-  if (!res.ok) {
-    alert("Error al eliminar");
-    return;
-  }
-
-  cargarIncidencias();
 }
 
 // ==========================
 // CAMBIAR ESTADO
 // ==========================
 async function cambiarEstado(id, estado) {
-  const token = localStorage.getItem("token");
 
-  if (!token) {
-    alert("Debes iniciar sesión");
-    return;
+  try {
+    const res = await fetch(API + "/api/incidencias/" + id, {
+      method: "PUT",
+      headers: getHeaders(true),
+      body: JSON.stringify({ estado })
+    });
+
+    if (res.status === 401) {
+      cerrarSesion();
+      return;
+    }
+
+    cargarIncidencias();
+
+  } catch (error) {
+    console.error(error);
   }
-
-  const res = await fetch(API + "/api/incidencias/" + id, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({ estado })
-  });
-
-  if (res.status === 401) {
-    alert("Sesión expirada");
-    localStorage.removeItem("token");
-    return;
-  }
-
-  cargarIncidencias();
 }
 
 // ==========================
 // CARGAR INCIDENCIAS
 // ==========================
 async function cargarIncidencias() {
-  const token = localStorage.getItem("token");
+
+  const token = getToken();
 
   const url = token
     ? API + "/api/incidencias"
     : API + "/api/incidencias/public";
 
-  const res = await fetch(url, {
-    headers: token
-      ? { "Authorization": "Bearer " + token }
-      : {}
-  });
+  try {
+    const res = await fetch(url, {
+      headers: getHeaders()
+    });
 
-  if (res.status === 401) {
-    localStorage.removeItem("token");
-    return;
+    if (res.status === 401) {
+      cerrarSesion();
+      return;
+    }
+
+    const data = await res.json();
+
+    renderStats(data);
+    renderIncidencias(data);
+
+  } catch (error) {
+    console.error(error);
   }
+}
 
-  const data = await res.json();
+// ==========================
+// RENDER STATS
+// ==========================
+function renderStats(data) {
 
   let pendientes = 0;
   let proceso = 0;
@@ -214,6 +238,12 @@ async function cargarIncidencias() {
   document.getElementById("pendientes2").textContent = pendientes;
   document.getElementById("proceso2").textContent = proceso;
   document.getElementById("resueltas2").textContent = resueltas;
+}
+
+// ==========================
+// RENDER LISTA
+// ==========================
+function renderIncidencias(data) {
 
   const lista = document.getElementById("lista-incidencias");
   if (!lista) return;
@@ -223,6 +253,7 @@ async function cargarIncidencias() {
   const usuario = JSON.parse(localStorage.getItem("usuario"));
 
   data.forEach(i => {
+
     const div = document.createElement("div");
     div.className = "incidencia";
 
@@ -256,18 +287,7 @@ async function cargarIncidencias() {
 }
 
 // ==========================
-// CAMBIO DE VISTAS
-// ==========================
-function mostrarVista(id) {
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active-view");
-  });
-
-  document.getElementById(id).classList.add("active-view");
-}
-
-// ==========================
-// CREAR INCIDENCIA (PROTEGIDO 🔐)
+// CREAR INCIDENCIA
 // ==========================
 document.addEventListener("submit", async (e) => {
 
@@ -277,26 +297,15 @@ document.addEventListener("submit", async (e) => {
     const titulo = document.getElementById("titulo").value;
     const descripcion = document.getElementById("descripcion").value;
 
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      alert("Debes iniciar sesión");
-      return;
-    }
-
     try {
       const res = await fetch(API + "/api/incidencias", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + token
-        },
+        headers: getHeaders(true),
         body: JSON.stringify({ titulo, descripcion })
       });
 
       if (res.status === 401) {
-        alert("Sesión expirada");
-        localStorage.removeItem("token");
+        cerrarSesion();
         return;
       }
 
@@ -305,17 +314,34 @@ document.addEventListener("submit", async (e) => {
         return;
       }
 
-      alert("Incidencia creada correctamente");
+      alert("Incidencia creada");
 
-      document.getElementById("formIncidencia").reset();
-
-      mostrarVista("incidenciasView");
+      e.target.reset();
       cargarIncidencias();
 
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error de conexión");
+      console.error(error);
     }
   }
-
 });
+
+// ==========================
+// UTIL
+// ==========================
+function cerrarSesion() {
+  alert("Sesión expirada");
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+  location.reload();
+}
+
+// ==========================
+// VISTAS
+// ==========================
+function mostrarVista(id) {
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active-view");
+  });
+
+  document.getElementById(id).classList.add("active-view");
+}
