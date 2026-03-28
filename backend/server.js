@@ -1,6 +1,16 @@
+require("dotenv").config();
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
 const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
 
 const app = express();
+
+// 🔥 AÑADE ESTO (CLAVE)
+app.use(cors({
+  origin: ["http://127.0.0.1:5500", "http://localhost:5500"]
+}));
 
 app.use(express.json());
 
@@ -8,7 +18,7 @@ app.use(express.json());
 // CONFIG
 // ==========================
 const PORT = process.env.PORT || 3000;
-const TOKEN = "123456";
+const JWT_SECRET = process.env.JWT_SECRET || "fallback123";
 
 // ==========================
 // TEST
@@ -24,8 +34,18 @@ app.post("/api/auth/login", (req, res) => {
   const { usuario, password } = req.body || {};
 
   if (usuario === "Sergiito24" && password === "1234") {
+
+    const token = jwt.sign(
+      {
+        usuario: "Sergiito24",
+        rol: "admin"
+      },
+      JWT_SECRET,
+      { expiresIn: "2h" }
+    );
+
     return res.json({
-      token: TOKEN,
+      token,
       user: {
         usuario: "Sergiito24",
         rol: "admin"
@@ -37,20 +57,28 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 // ==========================
-// MIDDLEWARE AUTH
+// MIDDLEWARE JWT
 // ==========================
 function authMiddleware(req, res, next) {
-  const auth = req.headers.authorization;
+  const authHeader = req.headers.authorization;
 
-  if (!auth || auth !== `Bearer ${TOKEN}`) {
-    return res.status(401).json({ error: "Token inválido" });
+  if (!authHeader) {
+    return res.status(401).json({ error: "No autorizado" });
   }
 
-  next();
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Token inválido o expirado" });
+  }
 }
 
 // ==========================
-// INCIDENCIAS (MEMORIA)
+// DATOS
 // ==========================
 let incidencias = [
   {
@@ -62,22 +90,19 @@ let incidencias = [
 ];
 
 // ==========================
-// RUTA PUBLICA
+// PUBLICO
 // ==========================
 app.get("/api/incidencias/public", (req, res) => {
   res.json(incidencias);
 });
 
 // ==========================
-// RUTAS PRIVADAS
+// PRIVADO
 // ==========================
-
-// GET TODAS
 app.get("/api/incidencias", authMiddleware, (req, res) => {
   res.json(incidencias);
 });
 
-// CREAR
 app.post("/api/incidencias", authMiddleware, (req, res) => {
   const { titulo, descripcion } = req.body;
 
@@ -94,14 +119,9 @@ app.post("/api/incidencias", authMiddleware, (req, res) => {
 
   incidencias.push(nueva);
 
-  console.log("📥 Nueva incidencia:", nueva);
-
   res.json(nueva);
 });
 
-// ==========================
-// ACTUALIZAR ESTADO (PUT)
-// ==========================
 app.put("/api/incidencias/:id", authMiddleware, (req, res) => {
   const id = Number(req.params.id);
   const { estado } = req.body;
@@ -109,37 +129,24 @@ app.put("/api/incidencias/:id", authMiddleware, (req, res) => {
   const incidencia = incidencias.find(i => i.id === id);
 
   if (!incidencia) {
-    return res.status(404).json({ error: "Incidencia no encontrada" });
-  }
-
-  if (!estado) {
-    return res.status(400).json({ error: "Falta estado" });
+    return res.status(404).json({ error: "No encontrada" });
   }
 
   incidencia.estado = estado;
 
-  console.log("🔄 Incidencia actualizada:", incidencia);
-
   res.json(incidencia);
 });
 
-// ==========================
-// ELIMINAR (DELETE)
-// ==========================
 app.delete("/api/incidencias/:id", authMiddleware, (req, res) => {
   const id = Number(req.params.id);
 
-  const index = incidencias.findIndex(i => i.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ error: "Incidencia no encontrada" });
+  if (req.user.rol !== "admin") {
+    return res.status(403).json({ error: "No tienes permisos" });
   }
 
-  const eliminada = incidencias.splice(index, 1);
+  incidencias = incidencias.filter(i => i.id !== id);
 
-  console.log("🗑️ Incidencia eliminada:", eliminada[0]);
-
-  res.json({ message: "Incidencia eliminada" });
+  res.json({ message: "Eliminada" });
 });
 
 // ==========================
