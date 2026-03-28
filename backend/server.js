@@ -1,5 +1,4 @@
 require("dotenv").config();
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const express = require("express");
 const cors = require("cors");
@@ -7,9 +6,12 @@ const jwt = require("jsonwebtoken");
 
 const app = express();
 
-// 🔥 AÑADE ESTO (CLAVE)
+// ==========================
+// CORS (FUNCIONA LOCAL + PRODUCCIÓN)
+// ==========================
 app.use(cors({
-  origin: ["http://127.0.0.1:5500", "http://localhost:5500"]
+  origin: true,
+  credentials: true
 }));
 
 app.use(express.json());
@@ -28,7 +30,7 @@ app.get("/", (req, res) => {
 });
 
 // ==========================
-// LOGIN
+// LOGIN (JWT)
 // ==========================
 app.post("/api/auth/login", (req, res) => {
   const { usuario, password } = req.body || {};
@@ -78,7 +80,7 @@ function authMiddleware(req, res, next) {
 }
 
 // ==========================
-// DATOS
+// DATOS EN MEMORIA
 // ==========================
 let incidencias = [
   {
@@ -90,19 +92,22 @@ let incidencias = [
 ];
 
 // ==========================
-// PUBLICO
+// RUTA PUBLICA
 // ==========================
 app.get("/api/incidencias/public", (req, res) => {
   res.json(incidencias);
 });
 
 // ==========================
-// PRIVADO
+// RUTAS PRIVADAS
 // ==========================
+
+// GET
 app.get("/api/incidencias", authMiddleware, (req, res) => {
   res.json(incidencias);
 });
 
+// POST
 app.post("/api/incidencias", authMiddleware, (req, res) => {
   const { titulo, descripcion } = req.body;
 
@@ -122,6 +127,7 @@ app.post("/api/incidencias", authMiddleware, (req, res) => {
   res.json(nueva);
 });
 
+// PUT
 app.put("/api/incidencias/:id", authMiddleware, (req, res) => {
   const id = Number(req.params.id);
   const { estado } = req.body;
@@ -137,6 +143,7 @@ app.put("/api/incidencias/:id", authMiddleware, (req, res) => {
   res.json(incidencia);
 });
 
+// DELETE (solo admin)
 app.delete("/api/incidencias/:id", authMiddleware, (req, res) => {
   const id = Number(req.params.id);
 
@@ -146,7 +153,7 @@ app.delete("/api/incidencias/:id", authMiddleware, (req, res) => {
 
   incidencias = incidencias.filter(i => i.id !== id);
 
-  res.json({ message: "Eliminada" });
+  res.json({ message: "Incidencia eliminada" });
 });
 
 // ==========================
